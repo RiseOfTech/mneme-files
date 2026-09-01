@@ -6,8 +6,8 @@ import org.springframework.util.unit.DataSize;
 
 import io.github.ifamneme.mneme_files.domain.ContentType;
 import io.github.ifamneme.mneme_files.domain.ContentTypeDetector;
-import io.github.ifamneme.mneme_files.domain.FileContent;
 import io.github.ifamneme.mneme_files.domain.FileId;
+import io.github.ifamneme.mneme_files.domain.FileUpload;
 import io.github.ifamneme.mneme_files.domain.FileStorage;
 import io.github.ifamneme.mneme_files.domain.UnsupportedContentTypeException;
 
@@ -29,10 +29,10 @@ public class DefaultUploadFileUseCase implements UploadFileUseCase {
 	public UploadedFile upload(UploadFileCommand command) {
 		ContentType contentType = contentTypeDetector.detect(command.header())
 			.orElseThrow(UnsupportedContentTypeException::new);
-		FileContent.validateSize(command.size(), maxSizeBytes);
+		FileUpload.validateSize(command.size(), maxSizeBytes);
 
 		FileId id = FileId.generate();
-		fileStorage.store(id, new FileContent(command.data(), command.size(), contentType));
+		fileStorage.store(id, new FileUpload(command.data(), command.size(), contentType, command.uploader()));
 		return new UploadedFile(id, contentType, command.size());
 	}
 

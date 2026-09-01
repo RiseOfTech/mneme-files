@@ -3,11 +3,12 @@ package io.github.ifamneme.mneme_files.domain;
 import java.io.InputStream;
 import java.util.Objects;
 
-public record FileContent(InputStream data, long size, ContentType contentType) {
+public record FileUpload(InputStream data, long size, ContentType contentType, String uploader) {
 
-	public FileContent {
+	public FileUpload {
 		Objects.requireNonNull(data, "data");
 		Objects.requireNonNull(contentType, "contentType");
+		Objects.requireNonNull(uploader, "uploader");
 		if (size < 0) {
 			throw new IllegalArgumentException("size must not be negative");
 		}

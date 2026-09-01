@@ -21,6 +21,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("software.amazon.awssdk:s3:2.50.2")
 	implementation("software.amazon.awssdk:apache-client:2.50.2")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")

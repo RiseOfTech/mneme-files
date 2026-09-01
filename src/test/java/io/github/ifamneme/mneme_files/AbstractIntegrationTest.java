@@ -18,6 +18,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+import io.github.ifamneme.mneme_files.support.TestTokens;
+
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractIntegrationTest {
@@ -70,6 +72,12 @@ public abstract class AbstractIntegrationTest {
 		registry.add("mneme.files.storage.region", () -> "us-east-1");
 		registry.add("mneme.files.storage.access-key", () -> ACCESS_KEY);
 		registry.add("mneme.files.storage.secret-key", () -> SECRET_KEY);
+		// Every test context is a resource server now; point it at the dedicated test
+		// signing key pair (never the dev classpath default, whose private half doesn't
+		// exist anywhere) and the issuer TestTokens signs with.
+		registry.add("spring.security.oauth2.resourceserver.jwt.public-key-location",
+				() -> "classpath:jwt/test-public-key.pem");
+		registry.add("mneme.security.jwt.issuer", () -> TestTokens.ISSUER);
 	}
 
 	protected static String endpoint() {

@@ -5,7 +5,8 @@ package io.github.ifamneme.mneme_files.adapter.web;
 public enum FileErrorCode {
 
 	FILE_NOT_FOUND("file_not_found"), FILE_TOO_LARGE("file_too_large"),
-	UNSUPPORTED_CONTENT_TYPE("unsupported_content_type"), INVALID_REQUEST("invalid_request");
+	UNSUPPORTED_CONTENT_TYPE("unsupported_content_type"), INVALID_REQUEST("invalid_request"),
+	UNAUTHORIZED("unauthorized");
 
 	private final String code;
 

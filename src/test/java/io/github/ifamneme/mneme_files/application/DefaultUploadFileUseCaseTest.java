@@ -42,7 +42,8 @@ class DefaultUploadFileUseCaseTest {
 	@Test
 	void unsupportedContentType_rejectsBeforeTouchingStorage() {
 		when(contentTypeDetector.detect(any())).thenReturn(Optional.empty());
-		UploadFileCommand command = new UploadFileCommand(new byte[] { 1, 2, 3 }, InputStream.nullInputStream(), 10);
+		UploadFileCommand command = new UploadFileCommand(new byte[] { 1, 2, 3 }, InputStream.nullInputStream(), 10,
+				"test-subject");
 
 		assertThatThrownBy(() -> useCase.upload(command)).isInstanceOf(UnsupportedContentTypeException.class);
 
@@ -53,7 +54,7 @@ class DefaultUploadFileUseCaseTest {
 	void oversizedFile_rejectsBeforeTouchingStorage() {
 		when(contentTypeDetector.detect(any())).thenReturn(Optional.of(new ContentType("image/jpeg")));
 		UploadFileCommand command = new UploadFileCommand(new byte[] { 1, 2, 3 }, InputStream.nullInputStream(),
-				10 * 1024 * 1024);
+				10 * 1024 * 1024, "test-subject");
 
 		assertThatThrownBy(() -> useCase.upload(command)).isInstanceOf(FileTooLargeException.class);
 
@@ -63,8 +64,8 @@ class DefaultUploadFileUseCaseTest {
 	@Test
 	void validUpload_storesContentAndReturnsResult() {
 		when(contentTypeDetector.detect(any())).thenReturn(Optional.of(new ContentType("image/png")));
-		UploadFileCommand command = new UploadFileCommand(new byte[] { 1, 2, 3 }, InputStream.nullInputStream(),
-				100);
+		UploadFileCommand command = new UploadFileCommand(new byte[] { 1, 2, 3 }, InputStream.nullInputStream(), 100,
+				"test-subject");
 
 		UploadedFile result = useCase.upload(command);
 

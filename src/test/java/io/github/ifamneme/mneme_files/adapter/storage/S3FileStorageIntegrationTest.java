@@ -12,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import io.github.ifamneme.mneme_files.AbstractIntegrationTest;
 import io.github.ifamneme.mneme_files.config.StorageProperties;
 import io.github.ifamneme.mneme_files.domain.ContentType;
-import io.github.ifamneme.mneme_files.domain.FileContent;
 import io.github.ifamneme.mneme_files.domain.FileId;
 import io.github.ifamneme.mneme_files.domain.FileStorage;
+import io.github.ifamneme.mneme_files.domain.FileUpload;
 import io.github.ifamneme.mneme_files.domain.StoredFile;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -35,8 +35,8 @@ class S3FileStorageIntegrationTest extends AbstractIntegrationTest {
 		byte[] bytes = readFixture("valid.png");
 		FileId id = FileId.generate();
 
-		fileStorage.store(id,
-				new FileContent(new ByteArrayInputStream(bytes), bytes.length, new ContentType("image/png")));
+		fileStorage.store(id, new FileUpload(new ByteArrayInputStream(bytes), bytes.length,
+				new ContentType("image/png"), "test-subject"));
 
 		StoredFile loaded = fileStorage.load(id).orElseThrow();
 		try {
@@ -59,8 +59,8 @@ class S3FileStorageIntegrationTest extends AbstractIntegrationTest {
 		byte[] bytes = readFixture("valid.jpg");
 		FileId id = FileId.generate();
 
-		fileStorage.store(id,
-				new FileContent(new ByteArrayInputStream(bytes), bytes.length, new ContentType("image/jpeg")));
+		fileStorage.store(id, new FileUpload(new ByteArrayInputStream(bytes), bytes.length,
+				new ContentType("image/jpeg"), "test-subject"));
 
 		// No prefix, no directory segment, no extension: the key is exactly the id's
 		// string form.
@@ -69,6 +69,20 @@ class S3FileStorageIntegrationTest extends AbstractIntegrationTest {
 				.key(id.value().toString())
 				.build());
 		assertThat(head.contentLength()).isEqualTo((long) bytes.length);
+	}
+
+	@Test
+	void objectCarriesUploaderAsUserMetadata() throws IOException {
+		byte[] bytes = readFixture("valid.webp");
+		FileId id = FileId.generate();
+
+		fileStorage.store(id, new FileUpload(new ByteArrayInputStream(bytes), bytes.length,
+				new ContentType("image/webp"), "test-subject-42"));
+
+		var head = s3Client
+			.headObject(HeadObjectRequest.builder().bucket(storageProperties.getBucket()).key(id.value().toString())
+				.build());
+		assertThat(head.metadata()).containsEntry("uploader", "test-subject-42");
 	}
 
 	private byte[] readFixture(String name) throws IOException {

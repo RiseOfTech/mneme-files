@@ -10,6 +10,8 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,13 +41,15 @@ public class FileController {
 	}
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<FileResponseDto> upload(@RequestParam("file") MultipartFile file) throws IOException {
+	public ResponseEntity<FileResponseDto> upload(@RequestParam("file") MultipartFile file,
+			@AuthenticationPrincipal Jwt jwt) throws IOException {
 		byte[] header;
 		try (InputStream headerStream = file.getInputStream()) {
 			header = headerStream.readNBytes(ContentTypeDetector.HEADER_LENGTH_BYTES);
 		}
 
-		UploadFileCommand command = new UploadFileCommand(header, file.getInputStream(), file.getSize());
+		UploadFileCommand command = new UploadFileCommand(header, file.getInputStream(), file.getSize(),
+				jwt.getSubject());
 		UploadedFile uploaded = uploadFileUseCase.upload(command);
 
 		URI location = URI.create("/v1/files/" + uploaded.id().value());

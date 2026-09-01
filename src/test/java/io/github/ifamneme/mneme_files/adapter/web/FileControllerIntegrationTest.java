@@ -32,6 +32,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import io.github.ifamneme.mneme_files.AbstractIntegrationTest;
+import io.github.ifamneme.mneme_files.support.TestTokens;
 
 class FileControllerIntegrationTest extends AbstractIntegrationTest {
 
@@ -52,7 +53,8 @@ class FileControllerIntegrationTest extends AbstractIntegrationTest {
 		byte[] bytes = readFixture(fixture);
 		MockMultipartFile file = new MockMultipartFile("file", fixture, expectedContentType, bytes);
 
-		MvcResult uploadResult = mockMvc.perform(multipart("/v1/files").file(file))
+		MvcResult uploadResult = mockMvc
+			.perform(multipart("/v1/files").file(file).header("Authorization", "Bearer " + TestTokens.validToken()))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.id").exists())
 			.andExpect(jsonPath("$.contentType").value(expectedContentType))
@@ -89,12 +91,57 @@ class FileControllerIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	void uploadWithNoAuthorizationHeader_returns401Unauthorized() throws Exception {
+		assertRejectedUpload(null);
+	}
+
+	@Test
+	void uploadWithMalformedToken_returns401Unauthorized() throws Exception {
+		assertRejectedUpload("not-a-jwt-at-all");
+	}
+
+	@Test
+	void uploadWithExpiredToken_returns401Unauthorized() throws Exception {
+		assertRejectedUpload(TestTokens.expiredToken());
+	}
+
+	@Test
+	void uploadWithWrongSignature_returns401Unauthorized() throws Exception {
+		assertRejectedUpload(TestTokens.wrongSignatureToken());
+	}
+
+	@Test
+	void uploadWithWrongIssuer_returns401Unauthorized() throws Exception {
+		assertRejectedUpload(TestTokens.wrongIssuerToken());
+	}
+
+	private void assertRejectedUpload(String token) throws Exception {
+		byte[] bytes = readFixture("valid.png");
+		MockMultipartFile file = new MockMultipartFile("file", "valid.png", "image/png", bytes);
+
+		var request = multipart("/v1/files").file(file);
+		if (token != null) {
+			request.header("Authorization", "Bearer " + token);
+		}
+
+		mockMvc.perform(request)
+			.andExpect(status().isUnauthorized())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.code").value("unauthorized"));
+	}
+
+	@Test
+	void health_respondsWithNoToken() throws Exception {
+		mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+	}
+
+	@Test
 	void leadingBytesMatchNoAllowedType_returns415EvenIfDeclaredTypeIsAllowed() throws Exception {
 		byte[] textBytes = readFixture("text.txt");
 		// Declared type falsely claims an allowed image type - it must be ignored.
 		MockMultipartFile file = new MockMultipartFile("file", "text.txt", "image/jpeg", textBytes);
 
-		mockMvc.perform(multipart("/v1/files").file(file))
+		mockMvc.perform(multipart("/v1/files").file(file).header("Authorization", "Bearer " + TestTokens.validToken()))
 			.andExpect(status().isUnsupportedMediaType())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
 			.andExpect(jsonPath("$.code").value("unsupported_content_type"));
@@ -105,7 +152,7 @@ class FileControllerIntegrationTest extends AbstractIntegrationTest {
 		byte[] jpegBytes = readFixture("valid.jpg");
 		MockMultipartFile file = new MockMultipartFile("file", "photo", "application/octet-stream", jpegBytes);
 
-		mockMvc.perform(multipart("/v1/files").file(file))
+		mockMvc.perform(multipart("/v1/files").file(file).header("Authorization", "Bearer " + TestTokens.validToken()))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.contentType").value("image/jpeg"));
 	}
@@ -115,11 +162,13 @@ class FileControllerIntegrationTest extends AbstractIntegrationTest {
 		byte[] bytes = readFixture("valid.png");
 
 		MvcResult first = mockMvc
-			.perform(multipart("/v1/files").file(new MockMultipartFile("file", "a.png", "image/png", bytes)))
+			.perform(multipart("/v1/files").file(new MockMultipartFile("file", "a.png", "image/png", bytes))
+				.header("Authorization", "Bearer " + TestTokens.validToken()))
 			.andExpect(status().isCreated())
 			.andReturn();
 		MvcResult second = mockMvc
-			.perform(multipart("/v1/files").file(new MockMultipartFile("file", "b.png", "image/png", bytes)))
+			.perform(multipart("/v1/files").file(new MockMultipartFile("file", "b.png", "image/png", bytes))
+				.header("Authorization", "Bearer " + TestTokens.validToken()))
 			.andExpect(status().isCreated())
 			.andReturn();
 
@@ -152,6 +201,7 @@ class FileControllerIntegrationTest extends AbstractIntegrationTest {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		headers.setBearerAuth(TestTokens.validToken());
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
 
 		RestTemplate restTemplate = new RestTemplate();

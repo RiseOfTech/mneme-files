@@ -54,8 +54,9 @@ collapses the space an attacker must search. This is a security constraint, not 
 on the allowlist, so an invalid `ContentType` cannot exist. Types are not passed around
 as raw `String`.
 
-**`FileContent`** — `(InputStream data, long size, ContentType contentType)`. What is
-handed to storage.
+**`FileUpload`** — `(InputStream data, long size, ContentType contentType, String
+uploader)`. What is handed to storage: the bytes of one specific upload event, plus the
+token subject that made it (write-only audit metadata; see Security).
 
 **`StoredFile`** — `(FileId id, ContentType contentType, long size, String etag,
 InputStream data)`. What comes back.
@@ -69,7 +70,7 @@ Declared in `domain`, implemented in `adapter/storage`.
 
 ```java
 public interface FileStorage {
-    void store(FileId id, FileContent content);
+    void store(FileId id, FileUpload content);
     Optional<StoredFile> load(FileId id);
     void delete(FileId id);
 }
@@ -157,7 +158,7 @@ Order of operations, and it matters:
 
 - **Multipart parser** (`spring.servlet.multipart.max-file-size` / `max-request-size`) —
   the enforcing gate, rejecting before the whole file is buffered.
-- **Domain check** on `FileContent` — where the rule is *expressed*, rather than living
+- **Domain check** on `FileUpload` — where the rule is *expressed*, rather than living
   only in a YAML file. Redundant by design.
 - **`server.tomcat.max-swallow-size`** — the non-obvious one. When a request is rejected
   without its body being read, the container must still consume the remainder or the

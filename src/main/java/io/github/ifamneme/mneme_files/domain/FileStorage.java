@@ -4,7 +4,7 @@ import java.util.Optional;
 
 public interface FileStorage {
 
-	void store(FileId id, FileContent content);
+	void store(FileId id, FileUpload content);
 
 	/**
 	 * Returns {@link Optional#empty()} if no object exists for the id. The returned

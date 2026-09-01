@@ -5,16 +5,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-class FileContentTest {
+class FileUploadTest {
 
 	@Test
 	void acceptsSizeAtBoundary() {
-		assertThatCode(() -> FileContent.validateSize(10, 10)).doesNotThrowAnyException();
+		assertThatCode(() -> FileUpload.validateSize(10, 10)).doesNotThrowAnyException();
 	}
 
 	@Test
 	void rejectsSizeAboveLimit() {
-		assertThatThrownBy(() -> FileContent.validateSize(11, 10)).isInstanceOf(FileTooLargeException.class);
+		assertThatThrownBy(() -> FileUpload.validateSize(11, 10)).isInstanceOf(FileTooLargeException.class);
 	}
 
 }

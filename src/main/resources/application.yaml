@@ -5,8 +5,14 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: ${JWT_PUBLIC_KEY_LOCATION:classpath:keys/dev-public-key.pem}
 
 server:
+  port: 8333
   tomcat:
     max-swallow-size: 10MB
 
@@ -24,3 +30,6 @@ mneme:
         - image/jpeg
         - image/png
         - image/webp
+  security:
+    jwt:
+      issuer: ${JWT_ISSUER:mneme-auth}

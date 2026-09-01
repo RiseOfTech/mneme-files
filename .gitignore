@@ -20,3 +20,8 @@ out/
 *.key
 *.p12
 *.jks
+
+# Not secrets: a throwaway dev-only public key (no private half is ever committed) and
+# dedicated test-signing key pairs used for nothing but signing test JWTs.
+!src/main/resources/keys/*.pem
+!src/test/resources/jwt/*.pem

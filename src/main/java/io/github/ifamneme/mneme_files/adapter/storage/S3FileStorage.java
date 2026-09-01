@@ -1,14 +1,15 @@
 package io.github.ifamneme.mneme_files.adapter.storage;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import io.github.ifamneme.mneme_files.config.StorageProperties;
 import io.github.ifamneme.mneme_files.domain.ContentType;
-import io.github.ifamneme.mneme_files.domain.FileContent;
 import io.github.ifamneme.mneme_files.domain.FileId;
+import io.github.ifamneme.mneme_files.domain.FileUpload;
 import io.github.ifamneme.mneme_files.domain.FileStorage;
 import io.github.ifamneme.mneme_files.domain.FileStorageException;
 import io.github.ifamneme.mneme_files.domain.StoredFile;
@@ -32,12 +33,13 @@ public class S3FileStorage implements FileStorage {
 	}
 
 	@Override
-	public void store(FileId id, FileContent content) {
+	public void store(FileId id, FileUpload content) {
 		PutObjectRequest request = PutObjectRequest.builder()
 			.bucket(properties.getBucket())
 			.key(key(id))
 			.contentType(content.contentType().value())
 			.contentLength(content.size())
+			.metadata(Map.of("uploader", content.uploader()))
 			.build();
 		try (var data = content.data()) {
 			s3Client.putObject(request, RequestBody.fromInputStream(data, content.size()));
